@@ -1790,10 +1790,32 @@ class CourseRunTests(OAuth2Mixin, TestCase):
         """upgrade_deadline should return override if present, else fallback to _upgrade_deadline."""
         seat = factories.SeatFactory(upgrade_deadline_override=None)
         # Initially falls back to _upgrade_deadline
-        assert seat.upgrade_deadline == seat._upgrade_deadline
+        assert seat.upgrade_deadline == seat._upgrade_deadline  # pylint: disable=protected-access
         # Override takes precedence
-        seat.upgrade_deadline_override = seat._upgrade_deadline.replace(year=seat._upgrade_deadline.year + 1)
+        seat.upgrade_deadline_override = seat._upgrade_deadline.replace(year=seat._upgrade_deadline.year + 1)  # pylint: disable=protected-access
         assert seat.upgrade_deadline == seat.upgrade_deadline_override
+
+    @patch('course_discovery.apps.course_metadata.models.IS_COURSE_RUN_FOR_DUMMY_SKU_GENERATION')
+    @patch('course_discovery.apps.course_metadata.models.generate_sku')
+    def test_generate_sku_called_when_waffle_enabled(self, mock_generate_sku, mock_switch):
+        mock_switch.is_enabled.return_value = True  # Force switch to be active
+        course_run = factories.CourseRunFactory.create(key='course-v1:org1+12+2T2025b')
+        factories.SeatFactory.create(course_run=course_run)
+        seat_type = SeatType.objects.create(slug='verified')
+        prices = {'verified': 500}
+        course_run.update_or_create_seat_helper(seat_type, prices, upgrade_deadline_override=None)
+        mock_generate_sku.assert_called_once_with(None, course_run)
+
+    @patch('course_discovery.apps.course_metadata.models.IS_COURSE_RUN_FOR_DUMMY_SKU_GENERATION')
+    @patch('course_discovery.apps.course_metadata.models.generate_sku')
+    def test_generate_sku_called_when_waffle_disable(self, mock_generate_sku, mock_switch):
+        mock_switch.is_enabled.return_value = False  # Force switch to be active
+        course_run = factories.CourseRunFactory.create(key='course-v1:org1+12+2T2025b')
+        factories.SeatFactory.create(course_run=course_run)
+        seat_type = SeatType.objects.create(slug='verified')
+        prices = {'verified': 500}
+        course_run.update_or_create_seat_helper(seat_type, prices, upgrade_deadline_override=None)
+        mock_generate_sku.assert_not_called()
 
 
 class CourseRunTestsThatNeedSetUp(OAuth2Mixin, TestCase):

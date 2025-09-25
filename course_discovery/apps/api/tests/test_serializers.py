@@ -7,7 +7,6 @@ from urllib.parse import urlencode
 import ddt
 import pytest
 import responses
-from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.utils.text import slugify
 from django.utils.timezone import now
@@ -46,9 +45,7 @@ from course_discovery.apps.core.tests.helpers import make_image_file
 from course_discovery.apps.core.tests.mixins import ElasticsearchTestMixin, LMSAPIClientMixin
 from course_discovery.apps.core.utils import serialize_datetime
 from course_discovery.apps.course_metadata.choices import CourseRunStatus, ProgramStatus
-from course_discovery.apps.course_metadata.models import (
-    AbstractLocationRestrictionModel, CourseReview, CourseType, Seat
-)
+from course_discovery.apps.course_metadata.models import AbstractLocationRestrictionModel, CourseReview, CourseType
 from course_discovery.apps.course_metadata.search_indexes.documents import (
     CourseDocument, CourseRunDocument, LearnerPathwayDocument, PersonDocument, ProgramDocument
 )
